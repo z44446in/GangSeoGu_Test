@@ -555,7 +555,7 @@
 
 <script>
 // ─── Google Apps Script URL ───────────────────────────────────────────────
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzAUHNc1zH2G1NbH6D1fhIZEYiZ7q2NPDcnrNPJwzYZ3d2CETByHK16jwSSL-WeNUia/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzFgLplCq0K8V1tHzHHFI6YoOVjnfj8KIKJOQRcSYt_hKaCuwZhFd7ytpoJB761oBi7/exec';
 
 // ─── Answers ──────────────────────────────────────────────────────────────
 const answers = { q1: null, q2: null, q3: null };
@@ -678,9 +678,31 @@ async function sendData() {
     const agentName = document.getElementById('agentName').value.trim();
     const agentRelation = document.getElementById('agentRelation').value.trim();
 
-    const sigApplicantBase64 = document.getElementById('sigApplicant').toDataURL('image/png').split(',')[1];
+    // 서명 canvas에 '(서명)' 텍스트를 중앙에 합성해서 하나의 이미지로 만들기
+    function composeSig(canvasId) {
+      const src = document.getElementById(canvasId);
+      const w = src.width, h = src.height;
+      const tmp = document.createElement('canvas');
+      tmp.width = w; tmp.height = h;
+      const ctx = tmp.getContext('2d');
+      // 흰 배경
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, w, h);
+      // 서명 그림 복사
+      ctx.drawImage(src, 0, 0);
+      // '(서명)' 텍스트 중앙 오버레이 (반투명 회색)
+      const dpr = window.devicePixelRatio || 1;
+      ctx.font = `${13 * dpr}px 'Noto Sans KR', sans-serif`;
+      ctx.fillStyle = 'rgba(150,150,150,0.55)';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('(서명)', w / 2, h / 2);
+      return tmp.toDataURL('image/png').split(',')[1];
+    }
+
+    const sigApplicantBase64 = composeSig('sigApplicant');
     const sigAgentBase64 = sigState['sigAgent']?.hasDrawn
-      ? document.getElementById('sigAgent').toDataURL('image/png').split(',')[1]
+      ? composeSig('sigAgent')
       : null;
 
     const payload = {
